@@ -2,7 +2,7 @@ bucket1='adithyaawsassignment1'
 bucket1arn=$(echo arn:aws:s3:::$bucket1)
 bucket2='adithyaawsassignment2'
 bucket2arn=$(echo arn:aws:s3:::$bucket2)
-lambda=$(echo $bucket1-to-$bucket2)
+lambda=$(echo $bucket2)
 
 aws s3api put-bucket-versioning --bucket $bucket1 --versioning-configuration Status=Enabled
 aws s3api put-bucket-versioning --bucket $bucket2 --versioning-configuration Status=Enabled
@@ -37,15 +37,20 @@ def lambda_handler(event, context):
     target_bucket = context.function_name
     source_bucket = str(sns_message['Records'][0]['s3']['bucket']['name'])
     key = str(urllib.unquote_plus(sns_message['Records'][0]['s3']['object']['key']).decode('utf8'))
+    eventName = sns_message['Records'][0]['eventName']
     copy_source = {'Bucket':source_bucket, 'Key':key}
-    print 'Copying %s from bucket %s to bucket %s ..' % (key, source_bucket, target_bucket)
-    s3.copy_object(Bucket=target_bucket, Key=key, CopySource=copy_source)" > $pythonname
+    if eventName == 'ObjectCreated:Put':
+        print 'Copying %s from bucket %s to bucket %s ..' %(key, source_bucket, target_bucket)
+        s3.copy_object(Bucket=target_bucket, Key=key, CopySource=copy_source)
+    if eventName == 'ObjectRemoved:DeleteMarkerCreated':
+        s3.delete_object(Bucket=target_bucket, Key=key)" > $pythonname
 zip file.zip $pythonname
 
 handler=$lambda
 handler+='.lambda_handler'
 aws lambda create-function --function-name $lambda --runtime python2.7 --role arn:aws:iam::488599217855:role/lambda_s3_access --handler $handler --zip-file fileb://file.zip --timeout 300 --region us-east-1
 lambdaarn=$(aws lambda get-function-configuration --function-name $lambda --region us-east-1| grep -oP '(?<="FunctionArn": ")[^"]*')
+aws lambda add-permission --function-name $lambda --statement-id 123Test --action lambda:* --principal sns.amazonaws.com --source-arn $topicarn --source-arn $topicarn --region us-east-1
 
 aws sns subscribe --topic-arn $topicarn --protocol lambda --notification-endpoint $lambdaarn --region us-east-1
 subscribearn=$(aws sns subscribe --topic-arn $topicarn --protocol lambda --notification-endpoint $lambdaarn --region us-east-1| grep -oP '(?<="SubscriptionArn": ")[^"]*')
