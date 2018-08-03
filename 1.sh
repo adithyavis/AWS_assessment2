@@ -1,3 +1,5 @@
+#!/bin/bash
+
 bucket1='adithyaawsassignment1'
 bucket1arn=$(echo arn:aws:s3:::$bucket1)
 bucket2='adithyaawsassignment2'
