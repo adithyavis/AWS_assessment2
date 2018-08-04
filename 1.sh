@@ -1,14 +1,16 @@
 #!/bin/bash
-
+#The bucket names b1 and b2 can be entered manually here.
 bucket1='adithyaawsassignment1'
 bucket1arn=$(echo arn:aws:s3:::$bucket1)
 bucket2='adithyaawsassignment2'
 bucket2arn=$(echo arn:aws:s3:::$bucket2)
 lambda=$(echo $bucket2)
 
+#enabling versioning
 aws s3api put-bucket-versioning --bucket $bucket1 --versioning-configuration Status=Enabled
 aws s3api put-bucket-versioning --bucket $bucket2 --versioning-configuration Status=Enabled
 
+#creating a sns topic
 topicname=$(echo $bucket1-topic)
 aws sns create-topic --name $topicname --region us-east-1
 topicarn=$(aws sns create-topic --name $topicname --region us-east-1| grep -oP '(?<="TopicArn": ")[^"]*')
@@ -18,6 +20,7 @@ value=$(echo "{\"Version\":\"2008-10-17\",\"Id\":\"__default_policy_ID\",\"State
 aws sns set-topic-attributes --region us-east-1 --topic-arn $topicarn --attribute-name Policy --attribute-value $value   
 #aws sns get-topic-attributes  --region us-east-1 --topic-arn $topicarn
 
+#configuring s3 to put notification to sns topic
 eventname=$(cat <<EOF
 {"TopicConfigurations":[{"Id":"S3objectchanges","TopicArn":"$topicarn","Events":["s3:ObjectCreated:*","s3:ObjectRemoved:*"]}]}
 EOF
@@ -25,6 +28,7 @@ EOF
 aws s3api put-bucket-notification-configuration --bucket $bucket1 --notification-configuration $eventname
 #aws s3api get-bucket-notification-configuration --bucket $bucket1
 
+#lambda which is triggered by the sns topic
 pythonname=$bucket2
 pythonname+='.py'
 echo "import urllib
@@ -46,7 +50,7 @@ def lambda_handler(event, context):
         s3.copy_object(Bucket=target_bucket, Key=key, CopySource=copy_source)
     if eventName == 'ObjectRemoved:DeleteMarkerCreated':
         s3.delete_object(Bucket=target_bucket, Key=key)" > $pythonname
-zip file.zip $pythonname
+sudo zip file.zip $pythonname
 
 handler=$lambda
 handler+='.lambda_handler'
@@ -54,6 +58,7 @@ aws lambda create-function --function-name $lambda --runtime python2.7 --role ar
 lambdaarn=$(aws lambda get-function-configuration --function-name $lambda --region us-east-1| grep -oP '(?<="FunctionArn": ")[^"]*')
 aws lambda add-permission --function-name $lambda --statement-id 123Test --action lambda:* --principal sns.amazonaws.com --source-arn $topicarn --source-arn $topicarn --region us-east-1
 
+#adding the lambda as an sns subscriber
 aws sns subscribe --topic-arn $topicarn --protocol lambda --notification-endpoint $lambdaarn --region us-east-1
 subscribearn=$(aws sns subscribe --topic-arn $topicarn --protocol lambda --notification-endpoint $lambdaarn --region us-east-1| grep -oP '(?<="SubscriptionArn": ")[^"]*')
 
