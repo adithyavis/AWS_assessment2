@@ -18,27 +18,28 @@ ip1=$(echo "${ip1// /}")
 ip2=$(echo "${ip2// /}")
 
 echo "Generating public keys in both the instances"
-ssh -o CheckHostIP=no -i `echo $file` ec2-user@`echo $ip1` 'bash -s'<<'ENDSSH' 
+#Don't worry. Since this is an automation exercise, I am adding the no stricthostkeychecking flag. I wouldn't use it otherwise
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i `echo $file` ec2-user@`echo $ip1` 'bash -s'<<'ENDSSH' 
 ssh-keygen -f .ssh/id_rsa -t rsa -N '' 
 ENDSSH
 sleep 5
-ssh -o CheckHostIP=no -i `echo $file` ec2-user@`echo $ip2` 'bash -s'<<'ENDSSH' 
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i `echo $file` ec2-user@`echo $ip2` 'bash -s'<<'ENDSSH' 
 ssh-keygen -f .ssh/id_rsa -t rsa -N '' 
 ENDSSH
 sleep 5
 echo "Copying the public keys of each instance into the other instance"
 mkdir public1 public2
-scp -i $file -r ec2-user@$ip1:.ssh/id_rsa.pub ~/public1
-scp -i $file -r ec2-user@$ip2:.ssh/id_rsa.pub ~/public2
-scp -i $file -r  ~/public1/id_rsa.pub ec2-user@$ip2:~/
-scp -i $file -r  ~/public2/id_rsa.pub ec2-user@$ip1:~/
+scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i $file -r ec2-user@$ip1:.ssh/id_rsa.pub ~/public1
+scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i $file -r ec2-user@$ip2:.ssh/id_rsa.pub ~/public2
+scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i $file -r  ~/public1/id_rsa.pub ec2-user@$ip2:~/
+scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i $file -r  ~/public2/id_rsa.pub ec2-user@$ip1:~/
 
 
 echo "Connecting the two instances"
-ssh -i $file ec2-user@$ip1 <<'ENDSSH' 
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i $file ec2-user@$ip1 <<'ENDSSH' 
 echo $(cat id_rsa.pub) >> .ssh/authorized_keys
 ENDSSH
-ssh -i $file ec2-user@$ip2 <<'ENDSSH' 
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i $file ec2-user@$ip2 <<'ENDSSH' 
 echo $(cat id_rsa.pub) >> .ssh/authorized_keys
 ENDSSH
 
