@@ -250,7 +250,7 @@ def lambda_handler(event, context):
 sudo zip file3.zip $pythonname
 echo Creating adithyastartinstance lambda
 aws lambda create-function --function-name adithyastartinstance --runtime python3.6 \
---role arn:aws:iam::488599217855:role/lambda_s3_access --handler $handler\
+--role arn:aws:iam::488599217855:role/Lambda_EC2_fullaccess --handler $handler\
  --zip-file fileb://file3.zip --timeout 300 --region us-east-1
 
 lambdaarn=$(aws lambda get-function --function-name adithyastartinstance\
@@ -284,7 +284,7 @@ def lambda_handler(event, context):
 sudo zip file4.zip $pythonname
 echo Creating adithyastopinstance lambda
 aws lambda create-function --function-name adithyastopinstance --runtime python3.6 \
---role arn:aws:iam::488599217855:role/lambda_s3_access --handler $handler\
+--role arn:aws:iam::488599217855:role/Lambda_EC2_fullaccess --handler $handler\
  --zip-file fileb://file4.zip --timeout 300 --region us-east-1
 
 lambdaarn=$(aws lambda get-function --function-name adithyastopinstance\
