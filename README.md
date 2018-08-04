@@ -11,9 +11,9 @@
 **4.sh:** A Company is developing 2 applications which are hosted on AWS. To reduce the EC2 instance charges project owner has decided that development teams should work in specific time intervals and for the rest of the time, EC2 instances should be in STOP state. So to achieve this, the team should give the time intervals for the whole week at the starting of the week and EC2 instances should automatically start and stop accordingly. 
 For simplicity assume that there is only 1 time interval per day. Implement a solution to achieve this. 
  
-**generatejson.py** To Generate a json to configure cloudwatch event rule cronjobs 
+**generatejson.py** To generate a json to configure cloudwatch event rule cronjobs. A lambda function L1 parses the json and updates a cloudwatch event rule E1 accordingly. 
  
- **weekly.json** and **default.json** Weekly.json is updated every week and the necessary changes are then to be reflected in the event rule, which will then trigger a lambda function to create and delete instances. 
+ **weekly.json** and **default.json** Weekly.json is updated every week and the necessary changes are then to be reflected in the event rules E1 and E2, which will then trigger a lambda function L2 to create and delete instances respectively. 
   
   **function.zip** Zip file present in a S3 bucket which is to be uploaded to a lambda function 
    
